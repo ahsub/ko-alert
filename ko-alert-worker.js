@@ -28,7 +28,7 @@ const WATCHLIST = [
 ];
 
 const VOLUME_THRESHOLD = 1.5;   // 150% des 20-Tage-Durchschnitts
-const LOOKBACK = 20;            // Tage für Hoch + Volumen-Durchschnitt
+const LOOKBACK = 15;            // Tage für Hoch + Volumen-Durchschnitt
 const ALERT_COOLDOWN_HOURS = 24;// Keine Doppel-Alerts innerhalb dieser Zeit
 
 // ── Cron Entry Point ─────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ async function runScan(env) {
 // ── Einzelner Ticker ──────────────────────────────────────────────────────────
 async function checkTicker(ticker, env) {
   // Twelve Data: tägliche OHLCV der letzten 25 Tage
-  const url = `https://api.twelvedata.com/time_series?symbol=${ticker}&interval=1day&outputsize=${LOOKBACK + 5}&apikey=${env.TWELVE_DATA_KEY}`;
+  const url = `https://api.twelvedata.com/time_series?symbol=${ticker}&interval=1day&outputsize=25&apikey=${env.TWELVE_DATA_KEY}&country=US&exchange=NASDAQ`;
   const resp = await fetch(url);
   const data = await resp.json();
 
