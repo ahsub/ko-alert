@@ -1,3 +1,6 @@
-name = "ko-alert" 
+name = "ko-alert"
 main = "ko-alert-worker.js"
 compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["*/5 14-21 * * 1-5"]
