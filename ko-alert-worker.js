@@ -19,7 +19,6 @@
  *   name = "ko-alert"
  *   kv_namespaces = [{ binding = "KO_ALERT_KV", id = "<deine-kv-id>" }]
  *   [triggers]
- *   crons = ["*/5 14-21 * * 1-5"]   ← Mo–Fr 14:00–21:00 UTC (= US-Marktzeiten)
  */
 
 // ── Watchlist ────────────────────────────────────────────────────────────────
