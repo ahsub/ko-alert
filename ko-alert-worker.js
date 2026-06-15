@@ -1,5 +1,5 @@
 /**
- * KO Scanner Alert Worker v2.2
+ * KO Scanner Alert Worker v2.3
  * Cloudflare Worker + Cron Trigger
  */
 
@@ -112,6 +112,7 @@ async function sendTelegram(token, chatId, text) {
 
 async function getWatchlist(env) {
   try {
+    if (!env.KO_ALERT_KV) return DEFAULT_WATCHLIST;
     const kv = await env.KO_ALERT_KV.get('alert_watchlist');
     if (kv) {
       const parsed = JSON.parse(kv);
@@ -143,7 +144,7 @@ async function runScan(env, force = false) {
 
       if (bo.breakout) {
         const kvKey = `alert_sent_${sym}_${new Date().toISOString().slice(0, 10)}`;
-        const alreadySent = await env.KO_ALERT_KV.get(kvKey);
+        const alreadySent = env.KO_ALERT_KV ? await env.KO_ALERT_KV.get(kvKey) : null;
         if (alreadySent) { alerts.push(`${sym} (bereits gesendet)`); continue; }
 
         const flag = DE_MAP[sym] ? '🇩🇪' : '🇺🇸';
@@ -156,7 +157,7 @@ async function runScan(env, force = false) {
 
         const sent = await sendTelegram(env.TELEGRAM_TOKEN, env.TELEGRAM_CHAT_ID, msg);
         if (sent.ok) {
-          await env.KO_ALERT_KV.put(kvKey, '1', { expirationTtl: 86400 });
+          if (env.KO_ALERT_KV) await env.KO_ALERT_KV.put(kvKey, '1', { expirationTtl: 86400 });
           alerts.push(sym);
         } else {
           errors.push(`${sym}: Telegram Fehler: ${JSON.stringify(sent.result)}`);
@@ -179,7 +180,7 @@ async function runScan(env, force = false) {
     }))
   };
 
-  await env.KO_ALERT_KV.put('last_scan', JSON.stringify(scanResult));
+  if (env.KO_ALERT_KV) await env.KO_ALERT_KV.put('last_scan', JSON.stringify(scanResult));
   return scanResult;
 }
 
@@ -198,7 +199,7 @@ export default {
     }
 
     if (url.pathname === '/status') {
-      const last = await env.KO_ALERT_KV.get('last_scan');
+      const last = env.KO_ALERT_KV ? await env.KO_ALERT_KV.get('last_scan') : null;
       const wl   = await getWatchlist(env);
       return new Response(JSON.stringify({
         last_scan: last ? JSON.parse(last) : null,
