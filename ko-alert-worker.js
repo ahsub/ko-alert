@@ -1,5 +1,5 @@
 /**
- * KO Scanner Alert Worker v2.1
+ * KO Scanner Alert Worker v2.2
  * Cloudflare Worker + Cron Trigger
  */
 
@@ -229,9 +229,44 @@ export default {
       }
     }
 
+    // /debug-telegram → Telegram direkt testen, rohe Response anzeigen
+    if (url.pathname === '/debug-telegram') {
+      const token  = env.TELEGRAM_TOKEN  || 'NICHT GESETZT';
+      const chatId = env.TELEGRAM_CHAT_ID || 'NICHT GESETZT';
+      const tokenPreview = token.length > 10 ? token.slice(0,10)+'...' : token;
+      try {
+        const tgUrl = `${TELEGRAM_API}${token}/sendMessage`;
+        const body = JSON.stringify({
+          chat_id: chatId,
+          text: '🔧 Debug-Test vom KO Alert Worker',
+          parse_mode: 'HTML'
+        });
+        const res = await fetch(tgUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        });
+        const responseText = await res.text();
+        return new Response(JSON.stringify({
+          token_preview: tokenPreview,
+          chat_id: chatId,
+          tg_url: tgUrl.replace(token, tokenPreview),
+          http_status: res.status,
+          http_ok: res.ok,
+          tg_response: JSON.parse(responseText),
+        }, null, 2), { headers: cors });
+      } catch(e) {
+        return new Response(JSON.stringify({
+          error: e.message,
+          token_preview: tokenPreview,
+          chat_id: chatId,
+        }, null, 2), { status: 500, headers: cors });
+      }
+    }
+
     return new Response(JSON.stringify({
       status: 'KO Alert Worker v2.1',
-      endpoints: ['/test (force scan)', '/status', '/alert?sym=NVDA'],
+      endpoints: ['/test (force scan)', '/status', '/alert?sym=NVDA', '/debug-telegram'],
       market_open: isMarketOpen(),
       time_utc: new Date().toISOString(),
     }), { headers: cors });
